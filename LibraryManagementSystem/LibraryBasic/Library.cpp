@@ -11,8 +11,8 @@ using namespace std;
 #include "Customer.h"
 #include "Library.h"
 
-map<int,Book> Library::s_bookMap;
-map<int,Customer> Library::s_customerMap;
+map<int, Book> Library::s_bookMap;
+map<int, Customer> Library::s_customerMap;
 
 string Library::s_binaryPath("C:\\Users\\Stefan\\Library.binary");
 
@@ -41,45 +41,45 @@ Library::Library(void) {
     sscanf_s(text.c_str(), "%i", &choice);
 
     switch (choice) {
-      case 1:
-        addBook();
-        break;
+    case 1:
+      addBook();
+      break;
 
-      case 2:
-        deleteBook();
-        break;
+    case 2:
+      deleteBook();
+      break;
 
-      case 3:
-        listBooks();
-        break;
+    case 3:
+      listBooks();
+      break;
 
-      case 4:
-        addCustomer();
-        break;
+    case 4:
+      addCustomer();
+      break;
 
-      case 5:
-        deleteCustomer();
-        break;
+    case 5:
+      deleteCustomer();
+      break;
 
-      case 6:
-        listCustomers();
-        break;
+    case 6:
+      listCustomers();
+      break;
 
-      case 7:
-        borrowBook();
-        break;
+    case 7:
+      borrowBook();
+      break;
 
-      case 8:
-        reserveBook();
-        break;
+    case 8:
+      reserveBook();
+      break;
 
-      case 9:
-        returnBook();
-        break;
+    case 9:
+      returnBook();
+      break;
 
-      case 0:
-        quit = true;
-        break;
+    case 0:
+      quit = true;
+      break;
     }
 
     cout << endl;
@@ -89,8 +89,8 @@ Library::Library(void) {
 }
 
 bool Library::lookupBook(const string& author,
-              const string& title, Book* bookPtr /* = nullptr*/) {
-  for (const pair<int,Book>& entry : s_bookMap) {
+                         const string& title, Book* bookPtr /* = nullptr*/) {
+  for (const pair<int, Book>& entry : s_bookMap) {
     const Book& book = entry.second;
 
     if (book.author() == author) {
@@ -106,8 +106,8 @@ bool Library::lookupBook(const string& author,
 }
 
 bool Library::lookupCustomer(const string& name,
-       const string& address, Customer* customerPtr/*=nullptr*/){
-  for (const pair<int,Customer>& entry : s_customerMap) {
+                             const string& address, Customer* customerPtr/*=nullptr*/) {
+  for (const pair<int, Customer>& entry : s_customerMap) {
     const Customer& customer = entry.second;
 
     if ((customer.name() == name) &&
@@ -137,7 +137,7 @@ void Library::addBook(void) {
          << author << " already exists." << endl;
     return;
   }
-  
+
   cout << "Title: ";
   cin >> title;
 
@@ -162,7 +162,7 @@ void Library::deleteBook() {
     return;
   }
 
-  for (pair<int,Customer> entry : s_customerMap) {
+  for (pair<int, Customer> entry : s_customerMap) {
     Customer& customer = entry.second;
     customer.returnBook(book.bookId());
     customer.unreserveBook(book.bookId());
@@ -179,7 +179,7 @@ void Library::listBooks(void) {
     return;
   }
 
-  for (const pair<int,Book>& entry : s_bookMap) {
+  for (const pair<int, Book>& entry : s_bookMap) {
     const Book& book = entry.second;
     cout << book << endl;
   }
@@ -228,7 +228,7 @@ void Library::deleteCustomer(void) {
     return;
   }
 
-  for (pair<int,Book> entry : s_bookMap) {
+  for (pair<int, Book> entry : s_bookMap) {
     Book& book = entry.second;
     book.unreserveBook(customer.id());
     s_bookMap[book.bookId()] = book;
@@ -243,10 +243,232 @@ void Library::listCustomers(void) {
     cout << "No customers." << endl;
     return;
   }
-      
-  for (const pair<int,Customer>& entry : s_customerMap) {
+
+  for (const pair<int, Customer>& entry : s_customerMap) {
     const Customer& customer = entry.second;
     cout << customer << endl;
   }
 }
 
+void Library::borrowBook(void) {
+  string author;
+  cout << "Author: ";
+  cin >> author;
+
+  string title;
+  cout << "Title: ";
+  cin >> title;
+
+  Book book;
+  if (!lookupBook(author, title, &book)) {
+    cout << endl << "There is no book \"" << title << "\" by "
+         << " author " << author << "." << endl;
+    return;
+  }
+
+  if (book.borrowed()) {
+    cout << endl << "The book \"" << title << "\" by " << author
+         << " has already been borrowed." << endl;
+    return;
+  }
+
+  string name;
+  cout << "Customer name: ";
+  cin >> name;
+
+  string address;
+  cout << "Adddress: ";
+  cin >> address;
+
+  Customer customer;
+  if (!lookupCustomer(name, address, &customer)) {
+    cout << endl << "There is no customer with name " << name
+         << " and address " << address << "." << endl;
+    return;
+  }
+
+  book.borrowBook(customer.id());
+  customer.borrowBook(book.bookId());
+
+  s_bookMap[book.bookId()] = book;
+  s_customerMap[customer.id()] = customer;
+  cout << endl << "Borrowed." << endl;
+}
+
+void Library::reserveBook(void) {
+  string author;
+  cout << "Author: ";
+  cin >> author;
+
+  string title;
+  cout << "Title: ";
+  cin >> title;
+
+  Book book;
+  if (!lookupBook(author, title, &book)) {
+    cout << endl << "There is no book \"" << title << "\" by "
+         << "author " << author << "." << endl;
+    return;
+  }
+
+  if (!book.borrowed()) {
+    cout << endl << "The book with author " << author
+         << " and title \"" << title << "\" has not been "
+         << "borrowed. Please borrow the book instead." << endl;
+    return;
+  }
+
+  string name;
+  cout << "Customer name: ";
+  cin >> name;
+
+  string address;
+  cout << "Address: ";
+  cin >> address;
+
+  Customer customer;
+  if (!lookupCustomer(name, address, &customer)) {
+    cout << endl << "No customer with name " << name
+         << " and address " << address << " exists." << endl;
+    return;
+  }
+
+  if (book.customerId() == customer.id()) {
+    cout << endl << "The book has already been borrowed by "
+         << name << "." << endl;
+    return;
+  }
+
+  customer.reserveBook(book.bookId());
+  int position = book.reserveBook(customer.id());
+  s_bookMap[book.bookId()] = book;
+  s_customerMap[customer.id()] = customer;
+  cout << endl << position << "nd reserve." << endl;
+}
+
+void Library::returnBook(void) {
+  string author;
+  cout << "Author: ";
+  cin >> author;
+
+  string title;
+  cout << "Title: ";
+  cin >> title;
+
+  Book book;
+  if (!lookupBook(author, title, &book)) {
+    cout << endl << "No book \"" << title
+         << "\" by " << author << " exists." << endl;
+    return;
+  }
+
+  if (!book.borrowed()) {
+    cout << endl << "The book \"" << title
+         << "\" by " << author
+         << "\" has not been borrowed." << endl;
+    return;
+  }
+
+  book.returnBook();
+  cout << endl << "Returned." << endl;
+
+  Customer customer = s_customerMap[book.customerId()];
+  customer.returnBook(book.bookId());
+  s_customerMap[customer.id()] = customer;
+
+  list<int>& reservList = book.reservList();
+
+  if (!reservList.empty()) {
+    int newCustomerId = reservList.front();
+    reservList.erase(reservList.begin());
+    book.borrowBook(newCustomerId);
+
+    Customer newCustomer = s_customerMap[newCustomerId];
+    newCustomer.borrowBook(book.bookId());
+
+    s_customerMap[newCustomerId] = newCustomer;
+    cout << endl << "Borrowed by " << newCustomer.name() << endl;
+  }
+
+  s_bookMap[book.bookId()] = book;
+}
+
+void Library::load() {
+  ifstream inStream(s_binaryPath);
+
+  if (inStream) {
+    int numberOfBooks;
+    inStream.read((char*) &numberOfBooks, sizeof numberOfBooks);
+
+    for (int count = 0; count < numberOfBooks; ++count) {
+      Book book;
+      book.read(inStream);
+      s_bookMap[book.bookId()] = book;
+      Book::MaxBookId = max(Book::MaxBookId, book.bookId());
+    }
+
+    int numberOfCustomers;
+    inStream.read((char*) &numberOfCustomers,
+                  sizeof numberOfCustomers);
+
+    for (int count = 0; count < numberOfCustomers; ++count) {
+      Customer customer;
+      customer.read(inStream);
+      s_customerMap[customer.id()] = customer;
+      Customer::MaxCustomerId =
+        max(Customer::MaxCustomerId, customer.id());
+    }
+  }
+}
+
+void Library::save() {
+  ofstream outStream(s_binaryPath);
+
+  if (outStream) {
+    int numberOfBooks = s_bookMap.size();
+    outStream.write((char*) &numberOfBooks, sizeof numberOfBooks);
+
+    for (const pair<int, Book>& entry : s_bookMap) {
+      const Book& book = entry.second;
+      book.write(outStream);
+    }
+
+    int numberOfCustomers = s_customerMap.size();
+    outStream.write((char*) &numberOfCustomers,
+                    sizeof numberOfCustomers);
+
+    for (const pair<int, Customer>& entry : s_customerMap) {
+      const Customer& customer = entry.second;
+      customer.write(outStream);
+    }
+  }
+}
+
+/*int min(int x, int y) {
+  return (x < y) ? x : y;
+}
+
+int max(int x, int y) {
+  return (x > y) ? x : y;
+}
+
+void readString(istream& inStream, string& text) {
+  int size;
+  inStream.read((char*) &size, sizeof size);
+
+  text.clear();
+  for (int count = 0; count < size; ++count) {
+    char c;
+    inStream.read((char*) &c, sizeof c);
+    text.push_back(c);
+  }
+}
+
+void writeString(ostream& outStream, const string& text) {
+  int size = text.length();
+  outStream.write((char*) &size, sizeof size);
+
+  for (char c : text) {
+    outStream.write((char*) &c, sizeof c);
+  }
+}*/
